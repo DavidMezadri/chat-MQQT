@@ -17,7 +17,9 @@ export const ChatContext = createContext<ChatContextType>({
   sendMessage: () => {},
 });
 
-export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatService] = useState(() => new ChatService());
 

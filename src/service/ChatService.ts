@@ -17,8 +17,13 @@ export class ChatService {
   constructor() {
     this.topic = "teste";
     this.clientId = "user_" + Math.floor(Math.random() * 1000);
-  // @ts-ignore
-  this.client = new (window as any).Paho.Client("localhost", 9001, "/", this.clientId);
+
+    this.client = new (window as any).Paho.Client(
+      "localhost",
+      9001,
+      "/",
+      this.clientId
+    );
 
     this.client.onConnectionLost = (responseObject: any) => {
       console.log("Conexão perdida:", responseObject.errorMessage);
@@ -30,9 +35,9 @@ export class ChatService {
         const [author, ...rest] = message.payloadString.split(": ");
         const text = rest.join(": ");
         this.callback({
-          author,
+          author: author === this.clientId ? "Voce:" : author,
           text,
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: new Date().toLocaleTimeString(),
         });
       }
     };
@@ -48,7 +53,7 @@ export class ChatService {
           this.callback({
             author: "Sistema",
             text: "Conectado ao MQTT!",
-            timestamp: new Date().toLocaleTimeString()
+            timestamp: new Date().toLocaleTimeString(),
           });
         }
       },
@@ -60,8 +65,8 @@ export class ChatService {
 
   send(text: string) {
     const payload = `${this.clientId}: ${text}`;
-  // @ts-ignore
-  const message = new (window as any).Paho.Message(payload);
+    // @ts-ignore
+    const message = new (window as any).Paho.Message(payload);
     message.destinationName = this.topic;
     this.client.send(message);
   }

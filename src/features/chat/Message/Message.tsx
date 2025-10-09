@@ -6,11 +6,20 @@ interface MessageProps {
   timestamp: string;
 }
 
-export const Message: React.FC<MessageProps> = ({ author, text, timestamp }) => {
+export const Message: React.FC<MessageProps> = ({
+  author,
+  text,
+  timestamp,
+}) => {
   return (
-    <div style={{ marginBottom: 8 }}>
+    <div
+      style={{
+        marginBottom: 8,
+        textAlign: author == "Voce" ? "left" : "right",
+      }}
+    >
       <strong>{author}</strong> <em>{timestamp}</em>
-      <p>{text}</p>
+      <em>{" " + text}</em>
     </div>
   );
 };
