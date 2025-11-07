@@ -4,7 +4,7 @@ import { Box, Button, Typography, TextField, Modal } from "@mui/material";
 interface ModalPhoneCentralProps {
   open: boolean;
   onClose: () => void;
-  onConfirm?: (phone: string) => void;
+  onConfirm: (phone: string) => void;
 }
 
 export default function ModalPhoneCentral({
@@ -15,7 +15,14 @@ export default function ModalPhoneCentral({
   const [phone, setPhone] = useState("");
 
   const handleConfirm = () => {
-    if (onConfirm) onConfirm(phone);
+    const somenteNumeros = phone.replace(/\D/g, "");
+
+    if (somenteNumeros.length < 10 || somenteNumeros.length > 11) {
+      alert("Digite um número de telefone válido!");
+      return;
+    }
+
+    onConfirm?.(phone);
     onClose();
   };
 

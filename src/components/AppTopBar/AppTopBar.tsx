@@ -7,15 +7,15 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import "./../../index.css";
 
-interface ButtonAppBarProps {
+interface AppTopBarProps {
   onMenuClick: () => void;
   onLoginCLick: () => void;
 }
 
-export default function ButtonAppBar({
+export default function AppTopBar({
   onMenuClick,
   onLoginCLick,
-}: ButtonAppBarProps) {
+}: AppTopBarProps) {
   return (
     <Box
       sx={{

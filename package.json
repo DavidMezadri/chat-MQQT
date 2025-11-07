@@ -14,6 +14,8 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@types/paho-mqtt": "^1.0.10",
+    "paho-mqtt": "^1.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

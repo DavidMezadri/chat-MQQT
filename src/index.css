@@ -10,6 +10,7 @@
   --color-text-primary: rgba(255, 255, 255, 0.87);
   --color-text-secondary: rgba(255, 255, 255, 0.6);
   --color-text-muted: rgba(255, 255, 255, 0.4);
+  --color-send-button: #25d366;
 
   --background-primary: #242424;
   --background-secondary: #151515;
@@ -18,7 +19,9 @@
   --color-border: rgba(255, 255, 255, 0.12);
   --color-highlight: #747bff;
   --color-button-bg: #333333;
-  --color-button-hover: #444444;
+  --color-send-button: #25d366;
+  --color-send-button-hover: #1ebe5b;
+  --color-send-button-active: #128c7e;
 
   --shadow-default: 0 4px 8px rgba(0, 0, 0, 0.3);
 

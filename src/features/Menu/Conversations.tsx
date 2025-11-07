@@ -1,11 +1,12 @@
 import { useState } from "react";
-import ButtonAppBar from "../../components/ButtonAppBar/ButtonAppBar";
 import SideAppBar from "../../components/SideAppBar/SideAppBar";
 import ModalPhoneDrawer from "../../components/ModalPhone/ModalPhone";
 import { ChatWindow } from "../chat/ChatWindown/ChatWindown";
 import { ChatInput } from "../chat/ChatInput/ChatInput";
+import { MqttService } from "../../service/MqttService";
+import { ChatConversationService } from "../../service/ChatConversationService";
+import AppTopBar from "../../components/AppTopBar/AppTopBar";
 
-// Tipo da mensagem
 export interface Message {
   TimeStamp: string;
   text: string;
@@ -19,16 +20,21 @@ export interface TypeConversation {
 }
 
 export default function Conversation() {
+  const [mqttService, setMqttService] = useState<MqttService>();
+  const [chatConversationService, setChatConversationService] =
+    useState<ChatConversationService>();
   const [positionMenu, setPositionMenu] = useState(false);
-  const [positionModal, setPositionModal] = useState(false);
+  const [visibleModalPhoneDrawer, setVisibleModalPhoneDrawer] = useState(false);
 
   // IDs dos botões na SideAppBar
-  const [buttons, setButtons] = useState<number[]>([9999, 9998, 9997]);
+  const [buttons, setButtons] = useState<number[]>([
+    9999999999, 2899294599, 9997,
+  ]);
 
   // Lista de conversas
   const [conversation, setConversation] = useState<TypeConversation[]>([
     {
-      id: 9999,
+      id: 9999999999,
       name: "João",
       Messages: [
         { author: "João", TimeStamp: new Date().toISOString(), text: "Oi!" },
@@ -40,7 +46,7 @@ export default function Conversation() {
       ],
     },
     {
-      id: 9998,
+      id: 2899294599,
       name: "Maria",
       Messages: [
         {
@@ -81,7 +87,12 @@ export default function Conversation() {
   function loadConversation(id?: number, name?: string) {
     if (id) {
       const conv = conversation.find((c) => c.id === id);
-      if (conv) setSelectedConversation(conv);
+      if (conv) {
+        setSelectedConversation(conv);
+        console.log("teste");
+        chatConversationService?.joinChat(conv.id.toString() + "/chat");
+        console.log(chatConversationService);
+      }
       return;
     }
 
@@ -97,19 +108,35 @@ export default function Conversation() {
     setSelectedConversation(newConv);
   }
 
+  //Aqui vamos setar o número de telefone
+  async function setMyNumberTelephone(number: string) {
+    const entidade = new MqttService({
+      clientId: number,
+      brokerHost: "localhost",
+      brokerPort: 9001,
+      useSSL: false,
+    });
+    await entidade.connect();
+    setMqttService(entidade);
+    if (entidade === undefined) {
+      return;
+    }
+    const chatService = new ChatConversationService(entidade);
+    setChatConversationService(chatService);
+    chatConversationService?.joinMyTopic(number + "/chat");
+  }
+
   return (
     <>
-      {/* Modal de telefone */}
       <ModalPhoneDrawer
-        open={positionModal}
-        onClose={() => setPositionModal(false)}
+        open={visibleModalPhoneDrawer}
+        onClose={() => setVisibleModalPhoneDrawer(false)}
+        onConfirm={(numberTelephone) => setMyNumberTelephone(numberTelephone)}
       />
-      {/* Top AppBar */}
-      <ButtonAppBar
+      <AppTopBar
         onMenuClick={() => setPositionMenu(!positionMenu)}
-        onLoginCLick={() => setPositionModal(true)}
+        onLoginCLick={() => setVisibleModalPhoneDrawer(true)}
       />
-      {/* SideBar */}
       <SideAppBar
         open={positionMenu}
         buttons={buttons}
@@ -117,16 +144,18 @@ export default function Conversation() {
       />
       <ChatWindow
         sx={{
-          width: positionMenu ? "calc(95vw - 240px)" : "95vw", // diminui quando sidebar aberta
+          marginTop: "8px",
+          width: positionMenu ? "calc(100 - 240px)" : "100", // diminui quando sidebar aberta
           marginLeft: positionMenu ? "240px" : 0, // empurra à direita
           transition: "width 0.3s ease, margin-left 0.3s ease",
         }}
         messages={selectedConversation}
       />{" "}
       <ChatInput
+        chatConversationService={chatConversationService}
         sx={{
-          width: positionMenu ? "calc(95vw - 240px)" : "95vw", // diminui quando sidebar aberta
-          marginLeft: positionMenu ? "240px" : 0, // empurra à direita
+          width: positionMenu ? "calc(100 - 240px)" : "100", // diminui quando sidebar aberta
+          marginLeft: positionMenu ? "240px" : "100", // empurra à direita
           transition: "width 0.3s ease, margin-left 0.3s ease",
         }}
       />

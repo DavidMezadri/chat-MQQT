@@ -45,7 +45,6 @@ const MessageItem: React.FC<Message> = ({ TimeStamp, text, author }) => {
   );
 };
 
-// ChatWindow que recebe array de mensagens
 export const ChatWindow: React.FC<{
   messages: TypeConversation;
   sx: object;
@@ -74,14 +73,16 @@ export const ChatWindow: React.FC<{
         {messages.name}
       </Typography>
 
-      {messages.Messages?.map((msg, idx) => (
-        <MessageItem
-          key={idx}
-          author={msg.author}
-          TimeStamp={msg.TimeStamp}
-          text={msg.text}
-        />
-      ))}
+      {messages.Messages?.filter((msg) => (msg.text ?? "").trim() !== "").map(
+        (msg, idx) => (
+          <MessageItem
+            key={idx}
+            author={msg.author}
+            TimeStamp={msg.TimeStamp}
+            text={msg.text}
+          />
+        )
+      )}
     </Box>
   );
 };
