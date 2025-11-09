@@ -1,17 +1,17 @@
-import { useState } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 import { Drawer, Popover } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import { useState } from "react";
 import "./../../App.css";
-import ModalPhoneCentral from "../ModalPhone/ModalPhone";
-import { NewChatService } from "../../service/NewChatService";
+import type { NewChatService } from "../../service/NewChatService";
 import { formatPhoneBR } from "../../utils/formatDate";
+import ModalPhoneCentral from "../ModalPhone/ModalPhone";
 
 interface SideAppBarProps {
   open: boolean;
-  buttons: number[];
-  onSelect: (id: number) => void;
+  buttons: string[];
+  onSelect: (id: string) => void;
   newChatService: NewChatService | undefined;
 }
 
@@ -165,10 +165,10 @@ export default function SideAppBar({
             <Button
               sx={
                 {
-                color: "white",
-                justifyContent: "flex-start",
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-              }}
+                  color: "white",
+                  justifyContent: "flex-start",
+                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+                }}
               onClick={() => {
                 handleClosePopover();
                 alert("Novo grupo clicado");
@@ -180,12 +180,12 @@ export default function SideAppBar({
         </Popover>
       </Box>
       {popoverTelephoneOpen && (
-      <ModalPhoneCentral
-        open={popoverTelephoneOpen}
-        onClose={() => setPopoverTelephoneOpen(false)}
-        onConfirm={(targetUserId) => newChatService?.sendInvite(targetUserId, newChatService.getUserId())}
-      />
-)}
+        <ModalPhoneCentral
+          open={popoverTelephoneOpen}
+          onClose={() => setPopoverTelephoneOpen(false)}
+          onConfirm={(targetUserId) => newChatService?.sendInvite(targetUserId, newChatService.getUserId())}
+        />
+      )}
     </Drawer>
   );
 }

@@ -1,12 +1,12 @@
-import React from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Typography,
 } from "@mui/material";
+import type React from "react";
 
 // Tipagem das props
 interface InviteDialogProps {
@@ -30,8 +30,8 @@ export const AcceptDialog: React.FC<InviteDialogProps> = ({
 }) => {
   return (
     <Dialog
-      open={invite?.from != ""}
-      onClose={() => { onReject(); onClose && onClose(); }}
+      open={invite?.from !== ""}
+      onClose={() => { onReject(); onClose?.(); }}
       maxWidth="xs"
       fullWidth
       PaperProps={{

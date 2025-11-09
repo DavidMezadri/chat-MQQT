@@ -1,19 +1,17 @@
-import React, { useState } from "react";
-
 import { Box, ButtonBase, InputBase } from "@mui/material";
+import type React from "react";
+import { useState } from "react";
 
 import "./../../../index.css";
 
 interface ChatInputProps {
   sx?: object;
-  chatConversationService?: (topic: string, text: string) => void;
-  topic: string;
+  chatConversationService?: (text: string) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   sx,
   chatConversationService,
-  topic,
 }) => {
   const [text, setText] = useState("");
 
@@ -48,7 +46,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           height: "4vh", // altura fixa ou percentual
         }}
         onClick={() => {
-          chatConversationService?.(topic, text);
+          chatConversationService?.(text);
           setText("");
         }}
       >

@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-
-import SideAppBar from "../../components/SideAppBar/SideAppBar";
-import ModalPhoneDrawer from "../../components/ModalPhone/ModalPhone";
-import AppTopBar from "../../components/AppTopBar/AppTopBar";
-
-import { ChatWindow } from "../chat/ChatWindown/ChatWindown";
-import { ChatInput } from "../chat/ChatInput/ChatInput";
-import { MqttService } from "../../service/MqttService";
 import { AcceptDialog } from "../../components/AcceptDialog/AcceptDialog";
-import { ChatConversationService } from "../../service/ChatConversationService";
+import AppTopBar from "../../components/AppTopBar/AppTopBar";
+import ModalPhoneDrawer from "../../components/ModalPhone/ModalPhone";
+import SideAppBar from "../../components/SideAppBar/SideAppBar";
+import { MqttService } from "../../service/MqttService";
 import { NewChatService } from "../../service/NewChatService";
+import { ChatInput } from "../chat/ChatInput/ChatInput";
+import { ChatWindow } from "../chat/ChatWindown/ChatWindown";
 
 export interface Message {
   TimeStamp: string;
@@ -18,85 +15,27 @@ export interface Message {
 }
 
 export interface TypeConversation {
-  id: number;
-  name?: string;
-  Messages?: Message[];
+  id: string;
+  topic: string;
+  messages?: Message[];
 }
 
 export default function Conversation() {
   //Setando os serviços
-  const [mqttService, setMqttService] = useState<MqttService>();
+  const [_mqttService, setMqttService] = useState<MqttService>();
   const [newChatService, setNewChatService] = useState<NewChatService>();
-  
+
   const [positionMenu, setPositionMenu] = useState(false);
   const [visibleModalPhoneDrawer, setVisibleModalPhoneDrawer] = useState(false);
-  const [infoAcceptDialog, setInfoAcceptDialog] = useState({from: "", requestId: "", timestamp: ""});
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const events = newChatService?.pollAllEvents();
-      if (!events) return;
-      for (const ev of events) {
-        if (ev.type === "invite_received") {
-          setInfoAcceptDialog({from: ev.from, requestId: ev.requestId, timestamp: ev.timestamp });
-        }
-
-        if (ev.type === "invite_accepted") {
-        setButtons((prev) => [...prev, ev.acceptedBy]);
-        }
-      }
-      
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [newChatService]);
-
-  
-
-  // IDs dos botões na SideAppBar
-  const [buttons, setButtons] = useState<string[]>([
-  ]);
+  const [infoAcceptDialog, setInfoAcceptDialog] = useState({ from: "", requestId: "", timestamp: "" });
 
   // Lista de conversas
   const [conversation, setConversation] = useState<TypeConversation[]>([
     {
-      id: 9999999999,
-      name: "João",
-      Messages: [
-        { author: "João", TimeStamp: new Date().toISOString(), text: "Oi!" },
-        {
-          author: "Você",
-          TimeStamp: new Date().toISOString(),
-          text: "Oi João, tudo bem?",
-        },
-      ],
-    },
-    {
-      id: 2899294599,
-      name: "Maria",
-      Messages: [
-        {
-          author: "Maria",
-          TimeStamp: new Date().toISOString(),
-          text: "Tudo bem?",
-        },
-        {
-          author: "Você",
-          TimeStamp: new Date().toISOString(),
-          text: "Tudo sim, Maria!",
-        },
-      ],
-    },
-    {
-      id: 9997,
-      name: "Pedro",
-      Messages: [
-        { author: "Pedro", TimeStamp: new Date().toISOString(), text: "Olá!" },
-        {
-          author: "Você",
-          TimeStamp: new Date().toISOString(),
-          text: "Olá Pedro!",
-        },
+      id: "",
+      topic: "",
+      messages: [
+        { author: "", TimeStamp: new Date().toISOString(), text: "" },
       ],
     },
   ]);
@@ -104,33 +43,69 @@ export default function Conversation() {
   // Conversa selecionada
   const [selectedConversation, setSelectedConversation] =
     useState<TypeConversation>({
-      id: 0,
-      name: "",
-      Messages: [{ author: "", TimeStamp: new Date().toISOString(), text: "" }],
+      id: "0",
+      topic: "",
+      messages: [{ author: "", TimeStamp: new Date().toISOString(), text: "" }],
     });
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const events = newChatService?.pollAllEvents();
+      if (!events) return;
+      for (const ev of events) {
+        if (ev.type === "invite_received") {
+          setInfoAcceptDialog({ from: ev.from, requestId: ev.requestId, timestamp: ev.timestamp });
+        }
+
+        if (ev.type === "invite_accepted") {
+          setButtons((prev) => [...prev, ev.acceptedBy]);
+          console.log(`${ev.acceptedBy}, TÓPICO: ${ev.chatTopic}`);
+          setConversation((prev) => [
+            ...prev,
+            { id: ev.acceptedBy, topic: ev.chatTopic, messages: [] },
+          ]);
+        }
+
+        if (ev.type === "message_received") {
+          const existingConversation = conversation.find(c => c.id === ev.from);
+          if (existingConversation) {
+            setConversation((prev) =>
+              prev.map((c) =>
+                c.id === ev.from
+                  ? {
+                    ...c,
+                    messages: [
+                      ...c.messages ?? [],
+                      { author: ev.from, TimeStamp: ev.timestamp, text: ev.content },
+                    ],
+                  }
+                  : c
+              )
+            );
+          }
+          // Aqui você pode adicionar a lógica para atualizar a conversa com a nova mensagem
+        }
+      }
+
+    }, 500);
+    return () => clearInterval(interval);
+  }, [newChatService, conversation.find, conversation]);
+
+
+
+  // IDs dos botões na SideAppBar
+  const [buttons, setButtons] = useState<string[]>([
+  ]);
+
+
   // Seleciona ou cria conversa
-  function loadConversation(id?: number, name?: string) {
+  function loadConversation(id: string) {
     if (id) {
       const conv = conversation.find((c) => c.id === id);
       if (conv) {
         setSelectedConversation(conv);
-        ChatConversationService?.joinChat("/chat");
-        console.log(ChatConversationService);
       }
-      return;
     }
-
-    // Criar nova conversa
-    const newId = Math.floor(Math.random() * 9000) + 1000;
-    const newConv: TypeConversation = {
-      id: newId,
-      name: name || `Contato ${newId}`,
-      Messages: [],
-    };
-    setConversation((prev) => [...prev, newConv]);
-    setButtons((prev) => [...prev, newId]);
-    setSelectedConversation(newConv);
   }
 
   //Aqui vamos setar o número de telefone
@@ -181,9 +156,10 @@ export default function Conversation() {
         messages={selectedConversation}
       />{" "}
       <ChatInput
-        topic="general"
-        chatConversationService={(text) => newChatService?.sendInvite(newChatService.getUserId(), text)}
-        
+        chatConversationService={(text) => {
+          newChatService?.sendMessage(selectedConversation.topic, text);
+        }}
+
         sx={{
           width: positionMenu ? "calc(100 - 240px)" : "100", // diminui quando sidebar aberta
           marginLeft: positionMenu ? "240px" : "100", // empurra à direita
@@ -192,11 +168,21 @@ export default function Conversation() {
       />
       <AcceptDialog
         invite={infoAcceptDialog ? { from: infoAcceptDialog.from, requestId: infoAcceptDialog.requestId, timestamp: infoAcceptDialog.timestamp } : null}
-        onAccept={() => newChatService?.acceptInvite(infoAcceptDialog.requestId, infoAcceptDialog.from)}
+        onAccept={() => {
+          if (!newChatService) return;
+          const topics = newChatService?.acceptInvite(infoAcceptDialog.requestId, infoAcceptDialog.from);
+          newChatService.subscribeToChatTopic(topics);
+          setConversation((prev) => [
+            ...prev,
+            { id: infoAcceptDialog.from, topic: topics, messages: [] },
+          ]);
+        }}
         onReject={() => newChatService?.rejectInvite(infoAcceptDialog.requestId, infoAcceptDialog.from)}
-        onClose={() => setInfoAcceptDialog({from: "", requestId: "", timestamp: ""})}
+        onClose={() => setInfoAcceptDialog({ from: "", requestId: "", timestamp: "" })}
         //INSERIR A FUNÇÃO PARA CRIAR O NOVO CHAT AQUI QUANDO ACEITO - PQ NAO TEMOS EVENTO PARA ACEITAR
-        onNewChat={() => setButtons((prev) => [...prev, infoAcceptDialog.from])}
+        onNewChat={() => {
+          setButtons((prev) => [...prev, infoAcceptDialog.from]);
+        }}
       />
     </>
   );
