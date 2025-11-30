@@ -9,24 +9,23 @@ import {
 import type React from "react";
 
 // Tipagem das props
-interface InviteDialogProps {
+interface InviteDialogGroupProps {
   invite: {
     from: string;
     requestId: string;
+    groupName: string;
     timestamp: string;
   } | null;
   onAccept: () => void;
   onReject: () => void;
   onClose: () => void;
-  onNewChat: () => void;
 }
 
-export const AcceptDialog: React.FC<InviteDialogProps> = ({
+export const AcceptDialogGroup: React.FC<InviteDialogGroupProps> = ({
   invite,
   onAccept,
   onReject,
   onClose,
-  onNewChat,
 }) => {
   return (
     <Dialog
@@ -42,18 +41,19 @@ export const AcceptDialog: React.FC<InviteDialogProps> = ({
       }}
     >
       <DialogTitle sx={{ fontWeight: 600, textAlign: "center" }}>
-        📩 Novo convite
+        📩 Novo pedido
       </DialogTitle>
 
       <DialogContent sx={{ textAlign: "center" }}>
         {invite ? (
           <Typography variant="body1" sx={{ mt: 1 }}>
-            <strong>{invite.from}</strong> te enviou um convite.
+            <strong>{invite.from}</strong> te enviou um pedido para entrar no
+            Grupo: {invite?.groupName}.
             <br />
             Deseja aceitar?
           </Typography>
         ) : (
-          <Typography variant="body2">Carregando convite...</Typography>
+          <Typography variant="body2">Carregando pedido...</Typography>
         )}
       </DialogContent>
 
@@ -73,7 +73,6 @@ export const AcceptDialog: React.FC<InviteDialogProps> = ({
           onClick={() => {
             onAccept();
             onClose();
-            onNewChat();
           }}
           color="primary"
           variant="contained"

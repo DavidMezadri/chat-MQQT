@@ -6,10 +6,12 @@ import SideAppBar from "../../components/SideAppBar/SideAppBar";
 import { MqttService } from "../../service/MqttService";
 import {
   NewChatService,
+  type GroupDiscoveredEvent,
   type LoadConversations,
 } from "../../service/NewChatService";
 import { ChatInput } from "../chat/ChatInput/ChatInput";
 import { ChatWindow } from "../chat/ChatWindown/ChatWindown";
+import { AcceptDialogGroup } from "../../components/AcceptDialogGroup/AcceptDialogGroup";
 
 export interface Message {
   TimeStamp: string;
@@ -34,6 +36,7 @@ export default function Conversation() {
     from: "",
     requestId: "",
     timestamp: "",
+    groupName: "",
   });
 
   // Lista de conversas
@@ -53,6 +56,9 @@ export default function Conversation() {
       messages: [{ author: "", TimeStamp: new Date().toISOString(), text: "" }],
     });
 
+  //Lista de Grupos
+  const [listGroups, setListGroups] = useState<GroupDiscoveredEvent[]>([]);
+
   // IDs dos botões na SideAppBar
   const [buttons, setButtons] = useState<{ id: string; status: string }[]>([]);
 
@@ -71,10 +77,9 @@ export default function Conversation() {
             from: ev.from,
             requestId: ev.requestId,
             timestamp: ev.timestamp,
+            groupName: "",
           });
-        }
-
-        if (ev.type === "invite_accepted") {
+        } else if (ev.type === "invite_accepted") {
           const accepted = ev as any;
 
           const mappedStateConversations = conversation.map((c) => ({
@@ -106,10 +111,7 @@ export default function Conversation() {
           console.log(
             `Aceito por: ${accepted.acceptedBy}, TÓPICO: ${accepted.chatTopic}`
           );
-          console.log("Enviado para salvar:" + payload);
-        }
-
-        if (ev.type === "message_received") {
+        } else if (ev.type === "message_received") {
           const existingConversation = conversation.find(
             (c) => c.id === ev.from
           );
@@ -163,9 +165,7 @@ export default function Conversation() {
             // adiciona conversa nova
             setConversation((prev) => [...prev, newConversation]);
           }
-        }
-
-        if (ev.type === "presence_update") {
+        } else if (ev.type === "presence_update") {
           const userId = ev.userId;
           const status = ev.status; // online / offline
 
@@ -185,9 +185,7 @@ export default function Conversation() {
           } else {
             //console.log("🔍 Presence de alguém que não tem conversa aberta:",userId);
           }
-        }
-
-        if (ev.type === "load_conversation") {
+        } else if (ev.type === "load_conversation") {
           console.log("Entrou no load conversation para gerar conversas:", ev);
           setButtons(() =>
             ev.conversations.map((c: any) => ({
@@ -205,6 +203,132 @@ export default function Conversation() {
                 messages: [],
               })),
           ]);
+        } else if (ev.type === "group_created") {
+          if (buttons.find((b) => b.id === ev.groupName)) {
+            alert(`Grupo já está criado:${ev.groupName} - ${ev.groupTopic}`);
+            return;
+          }
+          setButtons((prev) => [
+            ...prev,
+            {
+              id: ev.groupName,
+              status: "grupo",
+            },
+          ]);
+
+          setConversation((prev) => [
+            ...prev,
+            { id: ev.groupName, topic: ev.groupTopic, messages: [] },
+          ]);
+        } else if (ev.type === "group_discovered") {
+          setListGroups((prev) => {
+            // verifica se já existe grupo com o mesmo ID OU nome
+            const exists = prev.some(
+              (g) => g.groupId === ev.groupId || g.groupName === ev.groupName
+            );
+
+            if (exists) return prev; // não adiciona duplicado
+
+            // adiciona novo grupo
+            return [...prev, ev];
+          });
+        } else if (ev.type === "group_join_request") {
+          if (
+            listGroups.find(
+              (b) =>
+                b.groupName === ev.groupName &&
+                b.members?.some((u) => u === ev.userRequestId)
+            )
+          ) {
+            alert(
+              `Convite enviado para entrar no grupo ${ev.groupName}, já enviado pelo: ${ev.userRequestId}`
+            );
+            return;
+          }
+          console.log("convite recebido", ev.userRequestId);
+          setInfoAcceptDialog({
+            from: ev.userRequestId,
+            requestId: ev.userRequestId,
+            timestamp: new Date().toISOString(),
+            groupName: ev.groupName,
+          });
+        } else if (ev.type === "group_join_approved") {
+          if (buttons.find((b) => b.id === ev.groupName)) {
+            alert(`Grupo já está criado:${ev.groupName} - ${ev.groupTopic}`);
+            return;
+          }
+          setButtons((prev) => [
+            ...prev,
+            {
+              id: ev.groupName,
+              status: "grupo",
+            },
+          ]);
+
+          setConversation((prev) => [
+            ...prev,
+            { id: ev.groupName, topic: ev.groupTopic, messages: [] },
+          ]);
+        } else if (ev.type === "group_removed") {
+          if (buttons.find((b) => b.id === ev.groupName)) {
+            const buttonsRemoved = buttons.filter((b) => b.id !== ev.groupName);
+            setButtons(buttonsRemoved);
+          }
+        } else if (ev.type === "group_message_received") {
+          console.log("aaaaaaaaaaaaaaaa", ev);
+          const existingConversation = conversation.find(
+            (c) => c.topic === ev.topicGroup
+          );
+          if (existingConversation) {
+            const newMessage = {
+              author: ev.from,
+              TimeStamp: ev.timestamp,
+              text: ev.content,
+            };
+
+            setConversation((prev) =>
+              prev.map((c) =>
+                c.topic === ev.topicGroup
+                  ? { ...c, messages: [...(c.messages ?? []), newMessage] }
+                  : c
+              )
+            );
+
+            // Atualiza a conversa atualmente aberta
+            setSelectedConversation((prev) =>
+              prev && prev.topic === ev.topicGroup
+                ? {
+                    ...prev,
+                    messages: [...(prev.messages ?? []), newMessage],
+                  }
+                : prev
+            );
+          } else {
+            //Se chegar mensagem e nao existir, cria nova
+            const newMessage = {
+              author: ev.from,
+              TimeStamp: ev.timestamp,
+              text: ev.content,
+            };
+
+            const newConversation = {
+              id: ev.from,
+              topic: ev.topicGroup,
+              messages: [newMessage],
+            };
+
+            // adiciona botão da conversa
+            setButtons((prev) => [
+              ...prev,
+              {
+                id: ev.from,
+                status: "",
+              },
+            ]);
+
+            // adiciona conversa nova
+            setConversation((prev) => [...prev, newConversation]);
+          }
         }
       }
 
@@ -276,16 +400,23 @@ export default function Conversation() {
         onConfirm={(numberTelephone) => setMyNumberTelephone(numberTelephone)}
       />
       <AppTopBar
-        onCleanCLick={() => newChatService?.cleanConversations()}
+        onCleanCLick={() => {
+          newChatService?.cleanConversations();
+          newChatService?.cleanListGroups(listGroups);
+          setListGroups([]);
+        }}
         onMenuClick={() => setPositionMenu(!positionMenu)}
         onLoginCLick={() => setVisibleModalPhoneDrawer(true)}
-        onDesconectClick={() => newChatService?.setStatusDisconnect()}
+        onDesconectClick={() => {
+          newChatService?.setStatusDisconnect();
+        }}
       />
       <SideAppBar
         open={positionMenu}
         buttons={buttons}
         onSelect={(id) => loadConversation(id)}
         newChatService={newChatService}
+        listGroups={listGroups}
       />
       <ChatWindow
         sx={{
@@ -325,7 +456,15 @@ export default function Conversation() {
               : prev
           );
 
-          newChatService?.sendMessage(selectedConversation.topic, textmsg);
+          if (selectedConversation.topic.startsWith("group/chat/")) {
+            newChatService?.sendGroupMessage(
+              selectedConversation.topic,
+              selectedConversation.id,
+              textmsg
+            );
+          } else {
+            newChatService?.sendMessage(selectedConversation.topic, textmsg);
+          }
         }}
         sx={{
           width: positionMenu ? "calc(100 - 240px)" : "100", // diminui quando sidebar aberta
@@ -333,49 +472,96 @@ export default function Conversation() {
           transition: "width 0.3s ease, margin-left 0.3s ease",
         }}
       />
-      <AcceptDialog
-        invite={
-          infoAcceptDialog
-            ? {
-                from: infoAcceptDialog.from,
-                requestId: infoAcceptDialog.requestId,
-                timestamp: infoAcceptDialog.timestamp,
-              }
-            : null
-        }
-        onAccept={() => {
-          if (!newChatService) return;
-          const topics = newChatService?.acceptInvite(
-            infoAcceptDialog.requestId,
-            infoAcceptDialog.from
-          );
-          newChatService.subscribeToChatTopic(topics);
-          setNewConversation(infoAcceptDialog.from, topics);
-          setConversation((prev) => [
-            ...prev,
-            { id: infoAcceptDialog.from, topic: topics, messages: [] },
-          ]);
-        }}
-        onReject={() =>
-          newChatService?.rejectInvite(
-            infoAcceptDialog.requestId,
-            infoAcceptDialog.from
-          )
-        }
-        onClose={() =>
-          setInfoAcceptDialog({ from: "", requestId: "", timestamp: "" })
-        }
-        //INSERIR A FUNÇÃO PARA CRIAR O NOVO CHAT AQUI QUANDO ACEITO - PQ NAO TEMOS EVENTO PARA ACEITAR
-        onNewChat={() => {
-          setButtons((prev) => [
-            ...prev,
-            {
-              id: infoAcceptDialog.from,
-              status: "online", // ou "offline" se preferir
-            },
-          ]);
-        }}
-      />
+      {
+        //definimos qual modal de aceite aparecerá
+        infoAcceptDialog.groupName ? (
+          <AcceptDialogGroup
+            invite={
+              infoAcceptDialog
+                ? {
+                    from: infoAcceptDialog.from,
+                    requestId: infoAcceptDialog.requestId,
+                    timestamp: infoAcceptDialog.timestamp,
+                    groupName: infoAcceptDialog.groupName,
+                  }
+                : null
+            }
+            onAccept={() => {
+              const selectGroup = listGroups.find(
+                (g) => g.groupName === infoAcceptDialog.groupName
+              );
+              newChatService?.approveJoinRequest(
+                selectGroup,
+                infoAcceptDialog.requestId
+              );
+              setInfoAcceptDialog({
+                from: "",
+                requestId: "",
+                timestamp: "",
+                groupName: "",
+              });
+            }}
+            onReject={() => {}}
+            onClose={() =>
+              setInfoAcceptDialog({
+                from: "",
+                requestId: "",
+                timestamp: "",
+                groupName: "",
+              })
+            }
+          />
+        ) : (
+          <AcceptDialog
+            invite={
+              infoAcceptDialog
+                ? {
+                    from: infoAcceptDialog.from,
+                    requestId: infoAcceptDialog.requestId,
+                    timestamp: infoAcceptDialog.timestamp,
+                  }
+                : null
+            }
+            onAccept={() => {
+              if (!newChatService) return;
+              const topics = newChatService?.acceptInvite(
+                infoAcceptDialog.requestId,
+                infoAcceptDialog.from
+              );
+              newChatService.subscribeToChatTopic(topics);
+              setNewConversation(infoAcceptDialog.from, topics);
+              setConversation((prev) => [
+                ...prev,
+                { id: infoAcceptDialog.from, topic: topics, messages: [] },
+              ]);
+            }}
+            onReject={() =>
+              newChatService?.rejectInvite(
+                infoAcceptDialog.requestId,
+                infoAcceptDialog.from
+              )
+            }
+            onClose={() =>
+              setInfoAcceptDialog({
+                from: "",
+                requestId: "",
+                timestamp: "",
+                groupName: "",
+              })
+            }
+            //INSERIR A FUNÇÃO PARA CRIAR O NOVO CHAT AQUI QUANDO ACEITO - PQ NAO TEMOS EVENTO PARA ACEITAR
+            onNewChat={() => {
+              setButtons((prev) => [
+                ...prev,
+                {
+                  id: infoAcceptDialog.from,
+                  status: "online", // ou "offline" se preferir
+                },
+              ]);
+            }}
+          />
+        )
+      }
     </>
   );
 }

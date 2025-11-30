@@ -4,15 +4,21 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import "./../../App.css";
-import type { NewChatService } from "../../service/NewChatService";
+import type {
+  GroupDiscoveredEvent,
+  NewChatService,
+} from "../../service/NewChatService";
 import { formatPhoneBR } from "../../utils/formatDate";
 import ModalPhoneCentral from "../ModalPhone/ModalPhone";
+import CreateGroupModal from "../CreateGroupModal/CreateGroupModal";
+import GroupsListModal from "../GroupsListModal/GroupsListModal";
 
 interface SideAppBarProps {
   open: boolean;
   buttons: { id: string; status: string }[];
   onSelect: (id: string) => void;
   newChatService: NewChatService | undefined;
+  listGroups: GroupDiscoveredEvent[];
 }
 
 export default function SideAppBar({
@@ -20,9 +26,12 @@ export default function SideAppBar({
   buttons,
   onSelect,
   newChatService,
+  listGroups,
 }: SideAppBarProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [popoverTelephoneOpen, setPopoverTelephoneOpen] = useState(false);
+  const [popoverGroupOpen, setPopoverGroupOpen] = useState(false);
+  const [popoverGroupListOpen, setPopoverGroupListOpen] = useState(false);
 
   const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -80,15 +89,22 @@ export default function SideAppBar({
               <Button
                 key={btn.id}
                 sx={{
-                  backgroundColor: "var(--color-button-bg)",
+                  backgroundColor:
+                    btn.status === "grupo"
+                      ? "var(--color-highlight)"
+                      : "var(--color-button-bg)",
                   boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
                   color: "inherit",
                   justifyContent: "center",
                 }}
                 onClick={() => onSelect(btn.id)}
               >
-                {`${formatPhoneBR(btn.id)} ${
-                  btn.status === "online" ? "🟢" : "🔴"
+                {`${btn.status === "grupo" ? btn.id : formatPhoneBR(btn.id)} ${
+                  btn.status === "online"
+                    ? "🟢"
+                    : btn.status === "grupo"
+                    ? ""
+                    : "🔴"
                 }`}
               </Button>
             ))}
@@ -174,10 +190,23 @@ export default function SideAppBar({
               }}
               onClick={() => {
                 handleClosePopover();
-                alert("Novo grupo clicado");
+                setPopoverGroupOpen(true);
               }}
             >
               Novo grupo
+            </Button>
+            <Button
+              sx={{
+                color: "white",
+                justifyContent: "flex-start",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+              }}
+              onClick={() => {
+                handleClosePopover();
+                setPopoverGroupListOpen(true);
+              }}
+            >
+              Entrar em grupo
             </Button>
           </Box>
         </Popover>
@@ -196,6 +225,30 @@ export default function SideAppBar({
               newChatService.getUserId()
             );
           }}
+        />
+      )}
+      {popoverGroupOpen && (
+        <CreateGroupModal
+          open={popoverGroupOpen}
+          onClose={() => setPopoverGroupOpen(false)}
+          onCreate={(targetUserId) => {
+            if (buttons.find((b) => b.id === targetUserId)) {
+              alert(`Grupojá criado com: ${targetUserId}`);
+              return;
+            }
+            newChatService?.createGroup(targetUserId);
+          }}
+        />
+      )}
+      {popoverGroupListOpen && (
+        <GroupsListModal
+          open={popoverGroupListOpen}
+          onClose={() => setPopoverGroupListOpen(false)}
+          groups={listGroups}
+          onEnter={(group) => newChatService?.requestJoinGroup(group)}
+          onInfo={() => {}}
+          onList={() => newChatService?.startListingGroups()}
+          hoiam={newChatService?.getUserId() ?? ""}
         />
       )}
     </Drawer>

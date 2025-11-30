@@ -116,6 +116,115 @@ export type ChatServiceEvent =
   | ErrorEvent;
 
 // ============================================================================
+// INFORMACOES DE GRUPO
+// ============================================================================
+
+export interface GroupInfo {
+  groupId: string;
+  groupName: string;
+  adminId: string;
+  memberCount: number;
+  createdAt: string;
+}
+
+// ============================================================================
+// EVENTOS GRUPO E TIPO DE MENSAGENS
+// ============================================================================
+
+export interface GroupCreatedEvent {
+  type: "group_created";
+  groupId: string;
+  groupName: string;
+  groupTopic: string;
+  adminId: string;
+  controlAdminTopic: string;
+  memberCount: number;
+  members: string[];
+  createdAt: string;
+}
+
+export interface GroupJoinRequestEvent {
+  type: "group_join_request";
+  groupId: string;
+  userRequestId: string;
+  groupName: string;
+  adminId: string;
+  controlAdminTopic: string;
+  memberCount: number;
+  members: string[];
+  createdAt: string;
+}
+
+export interface GroupJoinApprovedEvent {
+  type: "group_join_approved";
+  userRequestId: string;
+  approvedBy: string;
+  groupId: string;
+  userId: string;
+  groupName: string;
+  groupTopic: string;
+  adminId: string;
+  controlAdminTopic: string;
+  timestamp: string;
+}
+
+export interface GroupJoinRejectedEvent {
+  type: "group_join_rejected";
+  userRequestId: string;
+  repprovedBy: string;
+  groupId: string;
+  userId: string;
+  groupName: string;
+  adminId: string;
+  controlAdminTopic: string;
+  timestamp: string;
+}
+
+export interface GroupMessageReceivedEvent {
+  type: "group_message_received";
+  groupId: string;
+  from: string;
+  topicGroup: string;
+  content: string;
+  messageId: string;
+  timestamp: string;
+}
+
+//Listar Grupos
+export interface GroupDiscoveredEvent {
+  type: "group_discovered";
+  groupId: string;
+  groupName: string;
+  adminId: string;
+  controlAdminTopic: string;
+  memberCount: number;
+  members: string[];
+  createdAt: string;
+}
+export interface GroupRemovedEvent {
+  type: "group_removed";
+  groupId: string;
+  groupName: string;
+}
+
+export interface GroupErrorEvent {
+  type: "group_error";
+  error: string;
+  context?: any;
+  timestamp: string;
+}
+
+export type GroupServiceEvent =
+  | GroupCreatedEvent
+  | GroupJoinRequestEvent
+  | GroupJoinApprovedEvent
+  | GroupJoinRejectedEvent
+  | GroupMessageReceivedEvent
+  | GroupDiscoveredEvent
+  | GroupRemovedEvent
+  | GroupErrorEvent;
+
+// ============================================================================
 // SERVIÇO PRINCIPAL
 // ============================================================================
 
@@ -126,8 +235,9 @@ export class NewChatService {
   private presenceTopic: string;
   private presenceTopicOthers: string;
   private loadConversation: string;
+  private groupListTopic: string;
   // Fila de eventos
-  private eventQueue: ChatServiceEvent[] = [];
+  private eventQueue: (GroupServiceEvent | ChatServiceEvent)[] = [];
 
   constructor(mqttService: MqttService) {
     this.mqttService = mqttService;
@@ -136,6 +246,7 @@ export class NewChatService {
     this.presenceTopic = `presence/${this.userId}`;
     this.presenceTopicOthers = `presence`;
     this.loadConversation = `control/loadconversation/${this.userId}`;
+    this.groupListTopic = `group/list`;
 
     this.setupPresenceListener();
   }
@@ -148,6 +259,7 @@ export class NewChatService {
     this.loadConversations();
     this.setupControlChannel();
     this.setOnlineStatus();
+    this.startListingGroups();
   }
 
   private setupControlChannel(): void {
@@ -216,7 +328,6 @@ export class NewChatService {
 
   setStatusDisconnect(): void {
     this.setOfflineStatus();
-    // ... resto do código de desconexão
   }
 
   //✅ Marca como online
@@ -284,7 +395,6 @@ export class NewChatService {
         if (message.from === this.userId) {
           return;
         }
-
         this.pushEvent({
           type: "message_received",
           from: message.from,
@@ -297,6 +407,114 @@ export class NewChatService {
         console.log(
           `💬 [${this.userId}] Mensagem de ${message.from}: ${message.content}`
         );
+      }
+
+      try {
+        // Mensagens de CONTROLE (pedidos de entrada, aprovações, rejeições)
+        if (topic.startsWith(this.controlTopic)) {
+          const message = JSON.parse(payload);
+          //console.log("handler", message);
+          if (message.type === "group_join_request") {
+            this.eventQueue.push({
+              type: "group_join_request",
+              groupId: message.groupId,
+              userRequestId: message.userRequestId,
+              controlAdminTopic: message.controlAdminTopic,
+              adminId: message.adminId,
+              groupName: message.groupName,
+              memberCount: message.memberCount,
+              members: message.members,
+              createdAt: message.createdAt,
+            });
+          } else if (message.type === "group_join_approved") {
+            console.log(
+              "Isncrito no grupo Topico",
+              `group/chat/${message.groupId}`
+            );
+            // Inscreve automaticamente no grupo
+            this.mqttService.subscribe(
+              `group/chat/${message.groupId}`,
+              undefined,
+              1
+            );
+            this.eventQueue.push({
+              type: "group_join_approved",
+              approvedBy: message.userId,
+              groupId: message.groupId,
+              userId: message.userId,
+              groupName: message.groupName,
+              groupTopic: message.groupTopic,
+              adminId: message.userId,
+              controlAdminTopic: message.controlAdminTopic,
+              userRequestId: message.userRequestId,
+              timestamp: message.timestamp,
+            });
+          } else if (message.type === "group_join_rejection") {
+            this.eventQueue.push({
+              type: "group_join_rejected",
+              repprovedBy: message.userId,
+              groupId: message.groupId,
+              userId: message.userId,
+              groupName: message.groupName,
+              adminId: message.userId,
+              controlAdminTopic: message.controlAdminTopic,
+              userRequestId: message.userRequestId,
+              timestamp: message.timestamp,
+            });
+          }
+        }
+
+        // Mensagens de CHAT do grupo
+        else if (topic.startsWith("group/chat")) {
+          const message: GroupMessageReceivedEvent = JSON.parse(payload);
+          console.log("Recebendo mensagem no Handler, ", message);
+
+          // Ignora próprias mensagens
+          if (message.from === this.userId) return;
+
+          this.eventQueue.push({
+            type: "group_message_received",
+            groupId: message.groupId,
+            from: message.from,
+            topicGroup: message.topicGroup,
+            content: message.content,
+            messageId: message.messageId,
+            timestamp: message.timestamp,
+          });
+        }
+
+        // Listagem de Grupos, adicionar ou remover
+        else if (topic.startsWith(this.groupListTopic)) {
+          //console.log(topic, payload);
+          const ad: GroupDiscoveredEvent = JSON.parse(payload);
+          const rm: GroupRemovedEvent = JSON.parse(payload);
+          if (ad.type === "group_discovered") {
+            this.eventQueue.push({
+              type: "group_discovered",
+              controlAdminTopic: ad.controlAdminTopic,
+              groupId: ad.groupId,
+              groupName: ad.groupName,
+              adminId: ad.adminId,
+              memberCount: ad.memberCount,
+              members: ad.members,
+              createdAt: ad.createdAt,
+            });
+          }
+          if (rm.type === "group_removed") {
+            this.eventQueue.push({
+              type: "group_removed",
+              groupId: ad.groupId,
+              groupName: ad.groupName,
+            });
+          }
+        }
+      } catch (error) {
+        this.eventQueue.push({
+          type: "group_error",
+          error: "Erro ao processar mensagem de grupo",
+          context: { topic, payload, error },
+          timestamp: new Date().toISOString(),
+        });
       }
     });
   }
@@ -332,7 +550,7 @@ export class NewChatService {
   // ==========================================================================
 
   private handleControlMessage(message: ControlMessage | ChatMessage): void {
-    console.log("Tipo da Mensagem no HANDLER", message.type);
+    //console.log("Tipo da Mensagem no HANDLER", message.type);
     switch (message.type) {
       case "invite_received":
         this.handleInviteReceived(message);
@@ -342,15 +560,6 @@ export class NewChatService {
         break;
       case "invite_rejected":
         this.handleInviteRejected(message);
-        break;
-      default:
-        this.pushEvent({
-          type: "error",
-          error: "Mensagem desconhecida",
-          context: { message },
-          timestamp: new Date().toISOString(),
-        });
-        console.log(message);
         break;
     }
   }
@@ -430,10 +639,8 @@ export class NewChatService {
   // RESPOSTA A CONVITES
   // ==========================================================================
 
-  /**
+  /*
    * Aceita um convite recebido
-   * Cria um novo tópico de chat e envia a resposta para o remetente original
-   * Retorna o tópico criado
    */
   acceptInvite(requestId: string, fromUserId: string): string {
     // Cria tópico único para o chat
@@ -538,16 +745,237 @@ export class NewChatService {
     return `chat/${sortedUsers[0]}_${sortedUsers[1]}`;
   }
 
-  /**
-   * Adiciona evento à fila
-   */
-  private pushEvent(event: ChatServiceEvent): void {
-    this.eventQueue.push(event);
+  // ==========================================================================
+  // CRIAR GRUPO
+  // ==========================================================================
+
+  createGroup(groupName: string): string {
+    const groupId = `group_${groupName}_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+    const groupTopic = `group/chat/${groupId}`;
+    const createdAt = new Date().toISOString();
+
+    // Publica anúncio com RETAIN
+    const ad: GroupDiscoveredEvent = {
+      type: "group_discovered",
+      groupId,
+      groupName,
+      adminId: this.userId,
+      controlAdminTopic: this.controlTopic,
+      memberCount: 1,
+      members: [],
+      createdAt,
+    };
+
+    this.mqttService.publish(`${this.groupListTopic}/${groupId}`, ad, 1, true);
+
+    // Inscreve no grupo
+    this.mqttService.subscribe(groupTopic, undefined, 1);
+
+    this.eventQueue.push({
+      type: "group_created",
+      groupId,
+      groupName,
+      groupTopic,
+      adminId: this.userId,
+      controlAdminTopic: this.controlTopic,
+      memberCount: 1,
+      members: [],
+      createdAt,
+    });
+
+    console.log(`🏢 [${this.userId}] Grupo criado: ${groupName}`);
+    return groupId;
+  }
+
+  // ==========================================================================
+  // LISTAR GRUPOS
+  // ==========================================================================
+
+  startListingGroups(): void {
+    this.mqttService.subscribe("group/list/#", undefined, 1);
+    console.log(`📋 [${this.userId}] Listando grupos...`);
+  }
+
+  // ==========================================================================
+  // PEDIR ENTRADA NO GRUPO
+  // ==========================================================================
+
+  requestJoinGroup(group: GroupJoinRequestEvent): void {
+    const request: GroupJoinRequestEvent = {
+      type: "group_join_request",
+      groupId: group.groupId,
+      userRequestId: this.userId,
+      controlAdminTopic: group.controlAdminTopic,
+      adminId: group.adminId,
+      groupName: group.groupName,
+      memberCount: group.memberCount,
+      members: group.members,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.mqttService.publish(group.controlAdminTopic, request, 1);
+
+    console.log(
+      `📤 [${this.userId}] Pedido enviado para ${group.adminId} para entrada no grupo ${group.groupName}`
+    );
+  }
+
+  // ==========================================================================
+  // APROVAR ENTRADA (ADMIN)
+  // ==========================================================================
+
+  approveJoinRequest(
+    group?: GroupDiscoveredEvent,
+    userRequestId?: string
+  ): void {
+    if (group === undefined || userRequestId === undefined) {
+      return;
+    }
+    const approved: GroupJoinApprovedEvent = {
+      type: "group_join_approved",
+      approvedBy: this.userId,
+      groupId: group.groupId,
+      userId: this.userId,
+      groupName: group.groupName,
+      groupTopic: `group/chat/${group.groupId}`,
+      adminId: this.userId,
+      controlAdminTopic: group.controlAdminTopic,
+      userRequestId: userRequestId,
+      timestamp: new Date().toISOString(),
+    };
+    //Envia para o requisitante
+    this.mqttService.publish(`control/${userRequestId}`, approved, 1);
+
+    //Admin atualiza status do grupo
+    const groupDiscovered: GroupDiscoveredEvent = {
+      ...approved,
+      type: "group_discovered",
+      members: [...group.members, userRequestId],
+      memberCount: group.memberCount + 1,
+      createdAt: approved.timestamp,
+    };
+
+    this.mqttService.publish(
+      `${this.groupListTopic}/${group.groupId}`,
+      groupDiscovered,
+      1,
+      true
+    );
+
+    console.log(
+      `✅ [${this.userId}] Aprovado ${userRequestId} no grupo ${group.groupName}`,
+      approved
+    );
+  }
+
+  // ==========================================================================
+  // REJEITAR ENTRADA (ADMIN)
+  // ==========================================================================
+
+  rejectJoinRequest(group?: GroupJoinRequestEvent): void {
+    if (group === undefined) {
+      return;
+    }
+    const rejection: GroupJoinRejectedEvent = {
+      type: "group_join_rejected",
+      repprovedBy: this.userId,
+      groupId: group.groupId,
+      userId: this.userId,
+      groupName: group.groupName,
+      adminId: this.userId,
+      controlAdminTopic: group.controlAdminTopic,
+      userRequestId: group.userRequestId,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.mqttService.publish(
+      `group/control/${group.userRequestId}`,
+      rejection,
+      1
+    );
+
+    console.log(
+      `❌ [${this.userId}] Rejeitado ${group.userRequestId} no grupo ${group.groupName}`
+    );
+  }
+
+  // ==========================================================================
+  // ENVIAR MENSAGEM NO GRUPO
+  // ==========================================================================
+
+  sendGroupMessage(
+    topicGroup: string,
+    groupId: string,
+    content: string
+  ): string {
+    const messageId = `gmsg_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+
+    const message: GroupMessageReceivedEvent = {
+      type: "group_message_received",
+      groupId,
+      from: this.userId,
+      topicGroup: topicGroup,
+      content,
+      messageId,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.mqttService.publish(topicGroup, message, 1);
+
+    console.log(
+      `📨 [${this.userId}] Mensagem enviada no grupo ${groupId}`,
+      `No topico: group/chat/${groupId}`
+    );
+    return messageId;
+  }
+
+  // ==========================================================================
+  // SAIR DO GRUPO
+  // ==========================================================================
+
+  leaveGroup(groupId: string): void {
+    this.mqttService.unsubscribe(`group/chat/${groupId}`);
+    console.log(`👋 [${this.userId}] Saiu do grupo ${groupId}`);
+  }
+
+  cleanListGroups(listGroups: GroupDiscoveredEvent[]): void {
+    for (const group of listGroups) {
+      const message: GroupRemovedEvent = {
+        type: "group_removed",
+        groupId: group.groupId,
+        groupName: group.groupName,
+      };
+
+      if (group.adminId === this.userId) {
+        this.mqttService.publish(
+          `${this.groupListTopic}/${group.groupId}`,
+          message, // payload
+          1, // QoS
+          true // retain
+        );
+        this.mqttService.unsubscribe(`group/chat/${message.groupId}`);
+      }
+
+      console.log(`🧹 Grupo limpo: ${group.groupId} (${group.groupId})`);
+    }
   }
 
   // ==========================================================================
   // API DE EVENTOS
   // ==========================================================================
+
+  /**
+   * Adiciona evento à fila
+   */
+  private pushEvent<T extends ChatServiceEvent | GroupServiceEvent>(
+    event: T
+  ): void {
+    this.eventQueue.push(event);
+  }
 
   /**
    * Retorna seu ID de usuário
@@ -559,8 +987,8 @@ export class NewChatService {
   /**
    * Retorna todos os eventos pendentes e limpa a fila
    */
-  pollAllEvents(): ChatServiceEvent[] {
-    const events = [...this.eventQueue];
+  pollAllEvents<T extends GroupServiceEvent | ChatServiceEvent>(): T[] {
+    const events = [...this.eventQueue] as T[];
     this.eventQueue = [];
     return events;
   }

@@ -2,10 +2,9 @@ export const formatDate = (date: Date) => {
   return date.toLocaleTimeString();
 };
 
-
 export function formatPhoneBR(input: string | number): string {
   // força string e remove tudo que não é dígito
-  const s = String(input).replace(/\D/g, "");
+  const s = String(input); //.replace(/\D/g, "");
 
   if (!s) return "";
 
