@@ -314,7 +314,6 @@ export default function Conversation() {
               TimeStamp: ev.timestamp,
               text: ev.content,
             };
-            console.log("ALOOOOOOOOOOOOO", ev.from, ev.topicGroup);
 
             const newConversation = {
               id: ev.groupId,

@@ -1,79 +1,148 @@
-<<<<<<< HEAD
-teste
-=======
-# React + TypeScript + Vite
+# Chat MQTT Toticos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Um aplicativo de chat em tempo real construído com React, Vite e protocolo MQTT para comunicação de mensagens.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React** - Biblioteca para construção de interfaces
+- **Vite** - Build tool e dev server ultrarrápido
+- **TypeScript** - Tipagem estática para JavaScript
+- **MQTT** - Protocolo de mensageria leve para comunicação em tempo real
+- **Biblioteca Paho** - Implementa funcionalidades do MQTT
+- **ESLint** - Linting e formatação de código
 
-## React Compiler
+## 📋 Pré-requisitos
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- Node.js (versão 16 ou superior)
+- npm ou yarn
+- Broker MQTT (ex: Mosquitto, HiveMQ, ou broker público)
 
-Note: This will impact Vite dev & build performances.
+## 🔧 Instalação
 
-## Expanding the ESLint configuration
+1. Clone o repositório:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/DavidMezadri/chat-MQQT-Toticos.git
+cd chat-MQQT-Toticos
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Instale as dependências:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
->>>>>>> 61a3ae9 (teste)
+
+3. Configure as variáveis do broker na função:
+
+```
+setMyNumberTelephone
+      brokerHost: "localhost"
+      brokerPort: 9001
+      useSSL: false
+```
+
+## 🎮 Como usar
+
+### Modo de desenvolvimento
+
+```bash
+npm run dev
+```
+
+O aplicativo estará disponível em `http://localhost:5173`
+
+## 📱 Funcionalidades
+
+- ✅ Chat em tempo real usando protocolo MQTT
+- ✅ Interface responsiva e moderna
+- ✅ Conexão com brokers MQTT públicos ou privados
+- ✅ Suporte a múltiplos usuários simultâneos
+- ✅ Mensagens em tempo real com baixa latência
+
+## 🏗️ Estrutura do Projeto
+
+```
+chat-MQQT-Toticos/
+├── src/
+│   ├── components/      # Componentes React
+│   ├── hooks/           # Custom hooks
+│   ├── services/        # Serviços (MQTT client, etc)
+│   ├── styles/          # Arquivos de estilo
+│   ├── App.tsx          # Componente principal
+│   └── main.tsx         # Entry point
+├── public/              # Arquivos estáticos
+├── package.json
+├── vite.config.ts       # Configuração do Vite
+├── tsconfig.json        # Configuração do TypeScript
+└── eslint.config.js     # Configuração do ESLint
+```
+
+## 🔌 Configuração do MQTT
+
+Este projeto utiliza o protocolo MQTT para comunicação em tempo real. Você pode usar:
+
+- **Mosquitto local**: Instale o Mosquitto e rode localmente
+- **Broker próprio**: Configure seu próprio broker MQTT
+
+### Exemplo de configuração do cliente MQTT
+
+4. Ajustar Servidor Local Mosquitto
+   Verificar se temos servidor rodando
+
+```
+sudo systemctl status mosquitto
+```
+
+Criar arquivo de configuração do servidor (se não existir) e setar configurações
+
+```
+sudo nano /etc/mosquitto/mosquitto.conf
+
+
+# Place your local configuration in /etc/mosquitto/conf.d/
+
+# A full description of the configuration file is at
+# /usr/share/doc/mosquitto/examples/mosquitto.conf.example
+
+#pid_file /run/mosquitto/mosquitto.pid
+
+persistence true
+persistence_location /var/lib/mosquitto/
+
+include_dir /etc/mosquitto/conf.d
+
+# Listener MQTT padrão (TCP)
+listener 1883
+protocol mqtt
+allow_anonymous true
+
+# Listener para WebSocket (para usar no navegador com Paho JS)
+listener 9001
+protocol websockets
+allow_anonymous true
+
+#Ativar Logs Essenciais
+log_dest file /var/log/mosquitto/mosquitto.log
+log_type all
+
+
+sudo systemctl restart mosquitto
+
+```
+
+## 🤝 Contribuindo
+
+## 📝 Licença
+
+Este projeto é de código aberto e está disponível sob a licença MIT.
+
+## 👤 Autor
+
+**David Fambre Mezadri**
+**Paulo Henrique Hollenbach Muller**
+
+- GitHub: [@DavidMezadri](https://github.com/DavidMezadri)
+
+---
+
+⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
