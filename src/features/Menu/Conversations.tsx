@@ -190,7 +190,7 @@ export default function Conversation() {
           setButtons(() =>
             ev.conversations.map((c: any) => ({
               id: c.userId,
-              status: "offline",
+              status: c.topic.includes("group") ? "grupo" : "offline",
             }))
           );
           setConversation((prev) => [
@@ -215,6 +215,8 @@ export default function Conversation() {
               status: "grupo",
             },
           ]);
+
+          setNewConversation(ev.groupName, ev.groupTopic, false);
 
           setConversation((prev) => [
             ...prev,
@@ -265,6 +267,8 @@ export default function Conversation() {
             },
           ]);
 
+          setNewConversation(ev.groupName, ev.groupTopic, false);
+
           setConversation((prev) => [
             ...prev,
             { id: ev.groupName, topic: ev.groupTopic, messages: [] },
@@ -275,7 +279,7 @@ export default function Conversation() {
             setButtons(buttonsRemoved);
           }
         } else if (ev.type === "group_message_received") {
-          console.log("aaaaaaaaaaaaaaaa", ev);
+          console.log("group_message_received", ev);
           const existingConversation = conversation.find(
             (c) => c.topic === ev.topicGroup
           );
@@ -310,9 +314,10 @@ export default function Conversation() {
               TimeStamp: ev.timestamp,
               text: ev.content,
             };
+            console.log("ALOOOOOOOOOOOOO", ev.from, ev.topicGroup);
 
             const newConversation = {
-              id: ev.from,
+              id: ev.groupId,
               topic: ev.topicGroup,
               messages: [newMessage],
             };
@@ -322,7 +327,7 @@ export default function Conversation() {
               ...prev,
               {
                 id: ev.from,
-                status: "",
+                status: "grupo",
               },
             ]);
 
@@ -367,7 +372,12 @@ export default function Conversation() {
     await chatService.initialize();
   }
 
-  function setNewConversation(userId: string, topic: string) {
+  //Funcao para enviar conversas retidas
+  function setNewConversation(
+    userId: string,
+    topic: string,
+    chatIndividual = true
+  ) {
     const mappedStateConversations = conversation.map((c) => ({
       userId: c.id,
       topic: c.topic,
@@ -378,7 +388,7 @@ export default function Conversation() {
     const newConversation = {
       userId: userId,
       topic: topic,
-      chatIndividual: true,
+      chatIndividual,
       timestamp: new Date().toISOString(),
     };
 
@@ -476,6 +486,7 @@ export default function Conversation() {
         //definimos qual modal de aceite aparecerá
         infoAcceptDialog.groupName ? (
           <AcceptDialogGroup
+            //Modal aceite de grupo
             invite={
               infoAcceptDialog
                 ? {
@@ -512,6 +523,7 @@ export default function Conversation() {
             }
           />
         ) : (
+          //Modal aceite de chat
           <AcceptDialog
             invite={
               infoAcceptDialog
