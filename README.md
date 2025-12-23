@@ -248,22 +248,6 @@ docker run -p 5173:5173 chat-mqtt-toticos
 
 ---
 
-## 📚 Como Adicionar Screenshots
-
-Para adicionar suas próprias capturas de tela:
-
-1. Crie a pasta `docs/images/` na raiz do projeto
-2. Adicione suas imagens com os seguintes nomes:
-   - `screenshot-main.png` - Tela principal
-   - `screenshot-chat.png` - Chat funcionando
-   - `screenshot-config.png` - Tela de configuração
-   - `screenshot-multi-users.png` - Múltiplos usuários
-   - `screenshot-mobile.png` - Versão mobile
-
-3. As imagens serão automaticamente referenciadas no README
-
----
-
 ## 🤝 Contribuindo
 
 Contribuições são sempre bem-vindas! Para contribuir:
