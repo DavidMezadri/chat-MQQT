@@ -1,111 +1,190 @@
-# Chat MQTT Toticos
+# 💬 Chat MQTT Toticos
 
-Um aplicativo de chat em tempo real construído com React, Vite e protocolo MQTT para comunicação de mensagens.
+<div align="center">
+
+![Status](https://img.shields.io/badge/status-ativo-success.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-18+-61DAFB.svg?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6.svg?logo=typescript)
+![MQTT](https://img.shields.io/badge/MQTT-Protocol-660099.svg)
+
+Uma aplicação de chat em tempo real construída com React, Vite e protocolo MQTT, oferecendo comunicação instantânea e segura entre múltiplos usuários.
+
+[Demonstração](#-demonstração) • [Instalação](#-instalação) • [Recursos](#-recursos) • [Configuração](#️-configuração)
+
+</div>
+
+---
+
+## 📸 Demonstração
+
+### Interface Principal
+![Tela Principal](docs/images/screenshot-main.png)
+*Interface moderna e intuitiva do chat*
+
+### Chat em Tempo Real
+![Chat Funcionando](docs/images/screenshot-chat.png)
+*Mensagens sendo trocadas em tempo real via MQTT*
+
+### Configuração de Conexão
+![Configuração](docs/images/screenshot-config.png)
+*Tela de configuração do broker MQTT*
+
+### Múltiplos Usuários
+![Múltiplos Usuários](docs/images/screenshot-multi-users.png)
+*Vários usuários conectados simultaneamente*
+
+### Modo Responsivo
+<p align="center">
+  <img src="docs/images/screenshot-mobile.png" alt="Versão Mobile" width="300"/>
+</p>
+
+*Interface adaptada para dispositivos móveis*
+
+---
 
 ## 🚀 Tecnologias
 
-- **React** - Biblioteca para construção de interfaces
-- **Vite** - Build tool e dev server ultrarrápido
-- **TypeScript** - Tipagem estática para JavaScript
-- **MQTT** - Protocolo de mensageria leve para comunicação em tempo real
-- **Biblioteca Paho** - Implementa funcionalidades do MQTT
-- **ESLint** - Linting e formatação de código
+Este projeto foi desenvolvido utilizando as seguintes tecnologias:
+
+- **[React](https://reactjs.org/)** - Biblioteca JavaScript para construção de interfaces
+- **[Vite](https://vitejs.dev/)** - Build tool ultrarrápido com HMR
+- **[TypeScript](https://www.typescriptlang.org/)** - Superset JavaScript com tipagem estática
+- **[MQTT Protocol](https://mqtt.org/)** - Protocolo de mensageria leve para IoT
+- **[Paho MQTT](https://www.eclipse.org/paho/)** - Cliente JavaScript MQTT
+- **[ESLint](https://eslint.org/)** - Ferramenta de linting e formatação
+
+---
+
+## ✨ Recursos
+
+- ✅ **Chat em tempo real** usando protocolo MQTT
+- ✅ **Interface responsiva** e moderna
+- ✅ **Conexão com brokers** MQTT públicos ou privados
+- ✅ **Múltiplos usuários** simultâneos
+- ✅ **Baixa latência** na troca de mensagens
+- ✅ **Suporte a WebSocket** para comunicação no navegador
+- ✅ **Logs de sistema** para debugging
+- ✅ **Tipagem completa** com TypeScript
+
+---
 
 ## 📋 Pré-requisitos
 
-- Node.js (versão 16 ou superior)
-- npm ou yarn
-- Broker MQTT (ex: Mosquitto, HiveMQ, ou broker público)
+Antes de começar, certifique-se de ter instalado em sua máquina:
+
+- **Node.js** (versão 16 ou superior)
+- **npm** ou **yarn**
+- **Broker MQTT** (Mosquitto, HiveMQ, ou broker público)
+
+---
 
 ## 🔧 Instalação
 
-1. Clone o repositório:
+### 1️⃣ Clone o repositório
 
 ```bash
 git clone https://github.com/DavidMezadri/chat-MQQT-Toticos.git
 cd chat-MQQT-Toticos
 ```
 
-2. Instale as dependências:
+### 2️⃣ Instale as dependências
 
 ```bash
 npm install
 ```
 
-3. Configure as variáveis do broker na função:
+### 3️⃣ Configure o broker MQTT
 
+Edite as configurações do broker na função `setMyNumberTelephone`:
+
+```typescript
+{
+  brokerHost: "localhost",
+  brokerPort: 9001,
+  useSSL: false
+}
 ```
-setMyNumberTelephone
-      brokerHost: "localhost"
-      brokerPort: 9001
-      useSSL: false
-```
 
-## 🎮 Como usar
+---
 
-### Modo de desenvolvimento
+## 🎮 Como Usar
+
+### Modo de Desenvolvimento
+
+Execute o servidor de desenvolvimento:
 
 ```bash
 npm run dev
 ```
 
-O aplicativo estará disponível em `http://localhost:5173`
+O aplicativo estará disponível em: **http://localhost:5173**
 
-## 📱 Funcionalidades
+### Build para Produção
 
-- ✅ Chat em tempo real usando protocolo MQTT
-- ✅ Interface responsiva e moderna
-- ✅ Conexão com brokers MQTT públicos ou privados
-- ✅ Suporte a múltiplos usuários simultâneos
-- ✅ Mensagens em tempo real com baixa latência
+```bash
+npm run build
+```
+
+### Preview da Build
+
+```bash
+npm run preview
+```
+
+---
 
 ## 🏗️ Estrutura do Projeto
 
 ```
 chat-MQQT-Toticos/
-├── src/
-│   ├── components/      # Componentes React
-│   ├── hooks/           # Custom hooks
-│   ├── services/        # Serviços (MQTT client, etc)
-│   ├── styles/          # Arquivos de estilo
-│   ├── App.tsx          # Componente principal
-│   └── main.tsx         # Entry point
-├── public/              # Arquivos estáticos
-├── package.json
-├── vite.config.ts       # Configuração do Vite
-├── tsconfig.json        # Configuração do TypeScript
-└── eslint.config.js     # Configuração do ESLint
+├── 📁 public/              # Arquivos estáticos
+├── 📁 src/
+│   ├── 📁 components/      # Componentes React
+│   ├── 📁 hooks/           # Custom hooks
+│   ├── 📁 services/        # Serviços (MQTT client)
+│   ├── 📁 styles/          # Arquivos de estilo
+│   ├── 📄 App.tsx          # Componente principal
+│   └── 📄 main.tsx         # Entry point
+├── 📁 docs/
+│   └── 📁 images/          # Screenshots da aplicação
+├── 📄 package.json
+├── 📄 vite.config.ts       # Configuração do Vite
+├── 📄 tsconfig.json        # Configuração do TypeScript
+├── 📄 eslint.config.js     # Configuração do ESLint
+└── 📄 README.md
 ```
+
+---
 
 ## 🔌 Configuração do MQTT
 
-Este projeto utiliza o protocolo MQTT para comunicação em tempo real. Você pode usar:
+### Opções de Broker
 
-- **Mosquitto local**: Instale o Mosquitto e rode localmente
-- **Broker próprio**: Configure seu próprio broker MQTT
+Este projeto suporta diferentes tipos de brokers MQTT:
 
-### Exemplo de configuração do cliente MQTT
+1. **Mosquitto Local** - Instale e execute localmente
+2. **Broker Público** - Use brokers de teste gratuitos
+3. **Broker Próprio** - Configure seu servidor MQTT
 
-4. Ajustar Servidor Local Mosquitto
-   Verificar se temos servidor rodando
+### Configurando o Mosquitto Localmente
 
-```
+#### 1. Verificar Status do Servidor
+
+```bash
 sudo systemctl status mosquitto
 ```
 
-Criar arquivo de configuração do servidor (se não existir) e setar configurações
+#### 2. Criar/Editar Arquivo de Configuração
 
-```
+```bash
 sudo nano /etc/mosquitto/mosquitto.conf
+```
 
+#### 3. Adicionar Configurações
 
-# Place your local configuration in /etc/mosquitto/conf.d/
-
-# A full description of the configuration file is at
-# /usr/share/doc/mosquitto/examples/mosquitto.conf.example
-
-#pid_file /run/mosquitto/mosquitto.pid
-
+```conf
+# Persistência de dados
 persistence true
 persistence_location /var/lib/mosquitto/
 
@@ -116,33 +195,118 @@ listener 1883
 protocol mqtt
 allow_anonymous true
 
-# Listener para WebSocket (para usar no navegador com Paho JS)
+# Listener para WebSocket (navegador)
 listener 9001
 protocol websockets
 allow_anonymous true
 
-#Ativar Logs Essenciais
+# Ativar logs
 log_dest file /var/log/mosquitto/mosquitto.log
 log_type all
-
-
-sudo systemctl restart mosquitto
-
 ```
 
-## 🤝 Contribuindo
+#### 4. Reiniciar o Serviço
 
-## 📝 Licença
+```bash
+sudo systemctl restart mosquitto
+```
 
-Este projeto é de código aberto e está disponível sob a licença MIT.
+#### 5. Verificar Logs (opcional)
 
-## 👤 Autor
-
-**David Fambre Mezadri**
-**Paulo Henrique Hollenbach Muller**
-
-- GitHub: [@DavidMezadri](https://github.com/DavidMezadri)
+```bash
+tail -f /var/log/mosquitto/mosquitto.log
+```
 
 ---
 
-⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
+## 🐳 Docker (Opcional)
+
+O projeto inclui um `Dockerfile` para containerização:
+
+```bash
+# Build da imagem
+docker build -t chat-mqtt-toticos .
+
+# Executar container
+docker run -p 5173:5173 chat-mqtt-toticos
+```
+
+---
+
+## 🛠️ Scripts Disponíveis
+
+| Script | Descrição |
+|--------|-----------|
+| `npm run dev` | Inicia servidor de desenvolvimento |
+| `npm run build` | Gera build de produção |
+| `npm run preview` | Preview da build de produção |
+| `npm run lint` | Executa linting do código |
+
+---
+
+## 📚 Como Adicionar Screenshots
+
+Para adicionar suas próprias capturas de tela:
+
+1. Crie a pasta `docs/images/` na raiz do projeto
+2. Adicione suas imagens com os seguintes nomes:
+   - `screenshot-main.png` - Tela principal
+   - `screenshot-chat.png` - Chat funcionando
+   - `screenshot-config.png` - Tela de configuração
+   - `screenshot-multi-users.png` - Múltiplos usuários
+   - `screenshot-mobile.png` - Versão mobile
+
+3. As imagens serão automaticamente referenciadas no README
+
+---
+
+## 🤝 Contribuindo
+
+Contribuições são sempre bem-vindas! Para contribuir:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
+4. Push para a branch (`git push origin feature/MinhaFeature`)
+5. Abra um Pull Request
+
+---
+
+## 📝 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 👥 Autor
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/DavidMezadri">
+        <img src="https://github.com/DavidMezadri.png" width="100px;" alt="David Mezadri"/><br />
+        <sub><b>David Fambre Mezadri</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 📞 Contato
+
+Se você tiver alguma dúvida ou sugestão, sinta-se à vontade para abrir uma [issue](https://github.com/DavidMezadri/chat-MQQT-Toticos/issues) ou entrar em contato.
+
+---
+
+## 🌟 Mostre seu Apoio
+
+Se este projeto foi útil para você, considere dar uma ⭐ no repositório!
+
+---
+
+<div align="center">
+
+Feito com ❤️ por [David Mezadri](https://github.com/DavidMezadri)
+
+</div>
