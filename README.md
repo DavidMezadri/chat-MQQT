@@ -28,11 +28,15 @@ Uma aplicação de chat em tempo real construída com React, Vite e protocolo MQ
 
 ### Configuração de Conexão
 ![Configuração](docs/images/screenshot-config.png)
-*Tela de configuração do broker MQTT*
+*Tela login com teu número ID*
 
 ### Múltiplos Usuários
 ![Múltiplos Usuários](docs/images/screenshot-multi-users.png)
 *Vários usuários conectados simultaneamente*
+
+### Possibilidade de Criar Grupos
+![Múltiplos Usuários](docs/images/screenshot-groups.png)
+*Possibilidade de conversa entre varios usuários em grupos*
 
 ### Modo Responsivo
 <p align="center">
